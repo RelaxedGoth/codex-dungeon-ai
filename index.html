@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Codex Dungeon AI</title>
+  <style>
+    body {
+      background-color: #0a0a0a;
+      color: #ccc;
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      color: #6cf;
+    }
+
+    textarea, input, button {
+      width: 80%;
+      max-width: 600px;
+      margin: 0.5rem 0;
+      padding: 0.75rem;
+      font-size: 1em;
+      font-family: monospace;
+      border: 1px solid #555;
+      background-color: #1a1a1a;
+      color: #ccc;
+    }
+
+    button {
+      cursor: pointer;
+      background-color: #333;
+    }
+
+    #output, #oracle-output, #memory-panel, #companion-panel {
+      margin-top: 1rem;
+      white-space: pre-wrap;
+      border: 1px solid #444;
+      padding: 1rem;
+      background-color: #111;
+      width: 80%;
+      max-width: 600px;
+    }
+
+    .highlight {
+      color: #6cf;
+    }
+
+    #fallout-log {
+      margin-top: 1rem;
+      max-width: 600px;
+      background-color: #1a1a1a;
+      border: 1px solid #333;
+      padding: 0.5rem;
+      font-size: 0.9em;
+      overflow-y: auto;
+      max-height: 200px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Codex Dungeon: AI World Master</h1>
+
+  <label for="history">Story History:</label>
+  <textarea id="history" rows="4" placeholder="What has happened so far..."></textarea>
+
+  <label for="input">Your Action:</label>
+  <input type="text" id="input" placeholder="What does the player do or say?" />
+
+  <button onclick="sendPrompt()">Submit</button>
+  <button onclick="saveSession()">💾 Save</button>
+  <button onclick="loadSession()">📂 Load</button>
+  <button onclick="clearSession()">🧹 Clear</button>
+
+  <div id="output">AI response will appear here...</div>
+  <div id="oracle-output"></div>
+  <div id="memory-panel"><strong>Codex Memory:</strong><br/></div>
+  <div id="companion-panel"><strong>Companion Threads:</strong><br/></div>
+  <div id="fallout-log"><strong>Fallout Log:</strong><br/></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const history = document.getElementById('history');
+      if (!localStorage.getItem('codex_history')) {
+        history.value = `You awaken in a memory that doesn’t feel like yours.\nA hall of silver mirrors, a name stitched into your throat:\n\"Melodia.\" Shadows ripple across the floor...`;
+      }
+    });
+
+    function saveSession() {
+      localStorage.setItem('codex_history', document.getElementById('history').value);
+      localStorage.setItem('codex_output', document.getElementById('output').innerHTML);
+      localStorage.setItem('codex_fallout', document.getElementById('fallout-log').innerHTML);
+      localStorage.setItem('codex_memory', document.getElementById('memory-panel').innerHTML);
+      localStorage.setItem('codex_companion', document.getElementById('companion-panel').innerHTML);
+      alert('✅ Session saved!');
+    }
+
+    function loadSession() {
+      document.getElementById('history').value = localStorage.getItem('codex_history') || '';
+      document.getElementById('output').innerHTML = localStorage.getItem('codex_output') || 'No output.';
+      document.getElementById('fallout-log').innerHTML = localStorage.getItem('codex_fallout') || 'Fallout Log:';
+      document.getElementById('memory-panel').innerHTML = localStorage.getItem('codex_memory') || 'Codex Memory:';
+      document.getElementById('companion-panel').innerHTML = localStorage.getItem('codex_companion') || 'Companion Threads:';
+      alert('📂 Session loaded.');
+    }
+
+    function clearSession() {
+      localStorage.clear();
+      alert('🧹 Session cleared.');
+    }
+
+    async function sendPrompt() {
+      const userInput = document.getElementById('input').value;
+      const storyHistory = document.getElementById('history').value;
+
+      try {
+        const response = await fetch('/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userInput, storyHistory })
+        });
+
+        const data = await response.json();
+
+        const formatted = `
+<span class="highlight">Response:</span> ${data.response || '[No response]'}
+
+<span class="highlight">Axis:</span> ${JSON.stringify(data.axis || {})}
+<span class="highlight">Tags:</span> ${Array.isArray(data.tags) ? data.tags.join(", ") : 'None'}
+${data.fallout ? `<span class="highlight">Scene Fallout:</span> ${data.fallout}` : ''}
+${data.glow ? `<span class="highlight">🔥 Glow Activated (${data.glow_axis || 'Total Axis ≥ 3'})</span>` : ''}
+${data.echo ? `<span class="highlight">🌀 ${data.echo}</span>` : ''}
+${data.ritual ? `<span class="highlight">🕯️ Ritual: ${data.ritual}</span>` : ''}
+        `.trim();
+
+        document.getElementById('output').innerHTML = formatted;
+
+        if (data.fallout) {
+          const log = document.getElementById('fallout-log');
+          log.innerHTML += `\n→ ${data.fallout}`;
+        }
+
+        if (data.memory) {
+          const memoryDisplay = Object.entries(data.memory).map(([k,v]) => `${k}: ${v}`).join('<br>');
+          document.getElementById('memory-panel').innerHTML = `<strong>Codex Memory:</strong><br>${memoryDisplay}`;
+        }
+
+        if (data.companion) {
+          const npcLines = Object.entries(data.companion).map(([name, axes]) => {
+            return `${name}: ` + Object.entries(axes).map(([a,v]) => `${a}=${v}`).join(', ');
+          });
+          document.getElementById('companion-panel').innerHTML = `<strong>Companion Threads:</strong><br>${npcLines.join('<br>')}`;
+        }
+
+        if (data.oracle) {
+          document.getElementById('oracle-output').innerHTML = `<strong>Scene Oracle:</strong><br>${data.oracle}`;
+        }
+
+      } catch (err) {
+        document.getElementById('output').textContent = '❌ Error communicating with the AI.';
+        console.error('Request failed:', err);
+      }
+    }
+  </script>
+</body>
+</html>
