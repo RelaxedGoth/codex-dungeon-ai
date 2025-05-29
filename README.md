@@ -21,6 +21,14 @@ Codex Dungeon is an emotionally responsive storytelling engine powered by GPT-4,
 - Vanilla HTML/CSS/JavaScript frontend
 - Replit or localhost compatible
 
+Why I Built This Project & Its Impact
+
+I built Codex Dungeon AI as a storytelling engine powered by OpenAI, designed to simulate emotionally intelligent narrative experiences for players. It uses a structured worldbuilding system I co-authored (called The Codex), integrating features like Axis-based emotion tracking, Fallout logging, Companion Threads, and Ritual triggers.
+
+The goal was to showcase how custom AI tools can blend narrative logic with structured emotional systems — a powerful approach for gaming, simulation, and narrative design. Players interact through a lightweight browser UI, while the backend interprets actions using GPT and returns structured JSON responses that update the world state. It’s a working prototype for modular AI-driven games or virtual assistants in creative industries.
+
+This project demonstrates my ability to build full-stack AI tools, implement custom logic, work with APIs, and deploy structured responses in a user-facing product. I led the design, built the codebase, wrote the system prompts, and managed all frontend/backend integration.
+
 ## 🚀 How to Run
 
 1. Clone the repository or upload to [Replit](https://replit.com/)
